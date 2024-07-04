@@ -18,8 +18,8 @@ var OrderController = function () {
     // Fetch Data From Server 
     self.getData = function () {
         ajax.get(baseUrl).then(function (result) {
-            self.CurrentOrder(result.map(item => new OrderItemVM(item)))
-        })
+            self.CurrentOrder(result.map(item => new OrderItemVM(item)));
+        });
     }
 
     self.getData();
@@ -35,6 +35,7 @@ var OrderController = function () {
                         console.log("Data received", result);
                         self.CurrentOrder.push(new OrderItemVM(result));
                         self.resetForm();
+                        self.getData();
                         $('#orderModal').modal('hide');
                     })
                     .fail(function (err) {
@@ -42,32 +43,33 @@ var OrderController = function () {
                     });
                 break;
             default:
-                debugger;
                 ajax.put(baseUrl, JSON.stringify(orderData))
                     .done(function (result) {
                         var updatedOrder = new OrderItemVM(result);
-                        var index = self.CurrentOrder.indexOf(self.SelectedOrder());
+                        var index = self.CurrentOrder().findIndex(function (item) {
+                            return item.OrderId() === updatedOrder.OrderId();
+                        });
                         if (index >= 0) {
-                            self.CurrentOrder.splice(index, 1, updatedOrder);
+                            self.CurrentOrder.replace(self.CurrentOrder()[index], updatedOrder);
                         }
                         self.resetForm();
+                        self.getData();
                         $('#orderModal').modal('hide');
                     })
                     .fail(function (err) {
                         console.error("Error updating order:", err);
                     });
                 break;
-
         }
     };
-    
-
 
     // Delete Product
     self.DeleteProduct = function (model) {
         ajax.delete(baseUrl + "?id=" + model.OrderId())
             .done((result) => {
-                self.CurrentOrder.remove(model);
+                self.CurrentOrder.remove(function (item) {
+                    return item.OrderId() === model.OrderId();
+                });
             }).fail((err) => {
                 console.log(err);
             });
