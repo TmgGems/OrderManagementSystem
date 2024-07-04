@@ -19,7 +19,7 @@
                         <div class="row" data-bind="with: IsUpdated() ? SelectedOrder : NewOrder">
                             <div class="col-md-4 form-group">
                                 <label>Date:</label>
-                                <input type="date" class="form-control" data-bind="value: Date">
+                                <input type="datetime-local" class="form-control" data-bind="value: Date">
                             </div>
                             <div class="col-md-4 form-group">
                                 <label>Customer Name:</label>
@@ -43,8 +43,8 @@
                             <tbody data-bind="foreach: IsUpdated() ? SelectedOrder().Items : NewOrder().Items">
                                 <tr>
                                     <td><input type="text" class="form-control" data-bind="value: ProductName"></td>
-                                    <td><input type="number" class="form-control" data-bind="value: Quantity"></td>
-                                    <td><input type="number" step="0.01" class="form-control" data-bind="value: Price" /></td>
+                                    <td><input type="number" class="form-control" data-bind="value: Quantity, valueUpdate : 'input' ,event:{change: $root.calculateTotal}"></td>
+                                    <td><input type="number" step="0.01" class="form-control" data-bind="value: Price, valueUpdate : 'input' ,event:{change: $root.calculateTotal}" /></td>
                                     <td>
                                         <button class="btn btn-danger btn-sm" data-bind="click: $root.RemoveItem">
                                             <i class="fa-solid fa-trash-can"></i>Remove
@@ -83,12 +83,12 @@
                 <th>Action</th>
             </tr>
         </thead>
-        <tbody data-bind="foreach:CurrentOrder()">
+        <tbody data-bind="foreach: CurrentOrder">
             <tr>
-                <td data-bind="text:$index() +1"></td>
-                <td data-bind="text:Date"></td>
-                <td data-bind="text:CustomerName"></td>
-                <td data-bind="text:TotalAmount"></td>
+                <td data-bind="text: $index() + 1"></td>
+                <td data-bind="text: Date"></td>
+                <td data-bind="text: CustomerName"></td>
+                <td data-bind="text: TotalAmount"></td>
                 <td>
                     <button class="btn btn-sm btn-dark" data-bind="click: $root.SelectOrder" data-bs-toggle="modal" data-bs-target="#orderModal">Edit</button>
                     <button data-bind="click: $root.DeleteProduct" class="btn btn-sm btn-danger">Delete</button>
@@ -97,6 +97,7 @@
         </tbody>
     </table>
 </div>
+
 @section Scripts {
     <script src="~/js/knockout.js"></script>
     <script src="~/js/Order/Order.Controller.js"></script>

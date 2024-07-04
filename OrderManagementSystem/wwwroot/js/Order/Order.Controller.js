@@ -86,6 +86,10 @@ var OrderController = function () {
         self.resetForm();
     }
 
+    self.calculateTotal = function () {
+        self.totalAmount.notifySubscribers();  // Recalculate the total amount
+    };
+
     self.resetForm = function () {
         self.NewOrder(new OrderItemVM());
         self.SelectedOrder(new OrderItemVM());
