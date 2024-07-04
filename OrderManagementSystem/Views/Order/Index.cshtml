@@ -1,5 +1,4 @@
-﻿
-<div class="container mt-4">
+﻿<div class="container mt-4">
     <h2>Order Management System</h2>
     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#orderModal">
         Create New Order
@@ -17,7 +16,7 @@
                 </div>
                 <div class="modal-body">
                     <form>
-                        <div class="row" data-bind="with:SelectedOrder">
+                        <div class="row" data-bind="with: NewOrder">
                             <div class="col-md-4 form-group">
                                 <label>Date:</label>
                                 <input type="date" class="form-control" data-bind="value:Date">
@@ -41,34 +40,34 @@
                                     <th>Action</th>
                                 </tr>
                             </thead>
-                            <tbody data-bind="foreach: SelectedOrder().Items">
+                            <tbody data-bind="foreach: IsUpdated() ? SelectedOrder().Items : NewOrder().Items">
                                 <tr>
                                     <td><input type="text" class="form-control" data-bind="value:ProductName"></td>
                                     <td><input type="number" class="form-control" data-bind="value:Quantity"></td>
                                     <td><input type="number" step="0.01" class="form-control" data-bind="value:Price" /></td>
                                     <td>
-                                        <button class="btn btn-danger btn-sm" data-bind="click:$parent.RemoveItem">
+                                        <button class="btn btn-danger btn-sm" data-bind="click:$root.RemoveItem">
                                             <i class="fa-solid fa-trash-can"></i>Remove
                                         </button>
-                                        <button class="btn btn-success mb-3" data-bind="click:$parent.AddItem"><i class="fa-solid fa-plus"></i>Add Item</button>
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
-                       
-                        <div class="form-group" @* data-bind="with:SelectedOrder" *@>
+                        <button class="btn btn-success mb-3" data-bind="click:$root.AddItem"><i class="fa-solid fa-plus"></i>Add Item</button>
+
+                        <div class="form-group">
                             <label>Total Amount:</label>
-                            <input type="text" class="form-control" data-bind="value:totalAmount">
+                            <input type="text" class="form-control" data-bind="value:totalAmount" readonly>
                         </div>
 
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-primary">
-                        <span data-bind="click: $root.AddOrder">Create</span>
-                        <span data-bind="if: IsUpdated"> Update</span>
+                    <button class="btn btn-primary" data-bind="click: AddOrder">
+                        <span data-bind="ifnot: IsUpdated">Create</span>
+                        <span data-bind="if: IsUpdated">Update</span>
                     </button>
-                    <button  class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>

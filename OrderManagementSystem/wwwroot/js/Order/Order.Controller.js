@@ -1,11 +1,11 @@
 ﻿/// <reference path="order.model.js" />
 /// <reference path="../knockout.js" />
 
-
 const mode = {
     create: 1,
     update: 2
 };
+
 var OrderController = function () {
     var self = this;
     const baseUrl = "/api/OrderAPI";
@@ -14,11 +14,9 @@ var OrderController = function () {
     self.SelectedOrder = ko.observable(new OrderItemVM());
     self.NewOrder = ko.observable(new OrderItemVM());
     self.mode = ko.observable(mode.create);
-    self.IsUpdated = ko.observable(false);
 
-    //Fetch Data From Server 
-    self.getData = function ()
-    {
+    // Fetch Data From Server 
+    self.getData = function () {
         ajax.get(baseUrl).then(function (result) {
             self.CurrentOrder(result.map(item => new OrderItemVM(item)))
         })
@@ -26,21 +24,40 @@ var OrderController = function () {
 
     self.getData();
 
-    self.AddOrder = function ()
-    {
-        debugger
-        ajax.post(baseUrl, ko.toJSON(self.NewOrder()))
-            .done(function (result) {
-                console.log("Data received", result);
-                self.CurrentOrder.push(new OrderItemVM(result));
-                self.resetFrom();
-            })
-    }
+    self.AddOrder = function () {
+        var orderData = ko.toJS(self.NewOrder);
+        orderData.TotalAmount = self.totalAmount();
+
+        switch (self.mode()) {
+            case 1:
+                ajax.post(baseUrl, JSON.stringify(orderData))
+                    .done(function (result) {
+                        console.log("Data received", result);
+                        self.CurrentOrder.push(new OrderItemVM(result));
+                        self.resetForm();
+                        $('#orderModal').modal('hide');
+                    })
+                    .fail(function (err) {
+                        console.error("Error adding order:", err);
+                    });
+                break;
+            default:
+                debugger;
+                ajax.put(baseUrl, JSON.stringify(orderData))
+                    .done(function (result) {
+                        self.CurrentOrder.replace(self.SelectedOrder(), new OrderItemVM(result))
+                    })
+                    .fail(function (err) {
+                        console.log(err);
+                    });
+                break;
+
+        }
+    };
+    
 
 
-   
     // Delete Product
-
     self.DeleteProduct = function (model) {
         ajax.delete(baseUrl + "?id=" + model.OrderId())
             .done((result) => {
@@ -49,75 +66,57 @@ var OrderController = function () {
                 console.log(err);
             });
     };
-    //self.AddItem();
 
     self.SelectOrder = function (model) {
-
-        debugger
         self.SelectedOrder(model);
         self.IsUpdated(true);
         self.mode(mode.update);
     }
 
-   
     self.CloseModel = function () {
-        self.resetFrom();
+        self.resetForm();
     }
 
-    self.resetFrom = function () {
-
+    self.resetForm = function () {
+        self.NewOrder(new OrderItemVM());
         self.SelectedOrder(new OrderItemVM());
-        //self.mode(mode.create);
         self.IsUpdated(false);
+        self.AddItem(); // Add an initial empty item
     }
 
-    //Remove Item
+    // Remove Item
     self.RemoveItem = function (item) {
-        self.SelectedOrder().Items.remove(item)
-    };
-    //Add Item
-    self.AddItem = function () {
-        self.SelectedOrder().Items.push(new ItemVM());
+        if (self.IsUpdated()) {
+            self.SelectedOrder().Items.remove(item);
+        } else {
+            self.NewOrder().Items.remove(item);
+        }
     };
 
-    self.AddItem();
+    // Add Item
+    self.AddItem = function () {
+        if (self.IsUpdated()) {
+            self.SelectedOrder().Items.push(new ItemVM());
+        } else {
+            self.NewOrder().Items.push(new ItemVM());
+        }
+    };
 
     self.totalAmount = ko.computed(function () {
-        //debugger
-        var total = self.SelectedOrder().Items().reduce(function (total, item) {
-            var price = parseFloat(item.Price()) || 0; // Use item.Price() for observable
-            var quantity = parseInt(item.Quantity()) || 0; // Use item.Quantity() for observable
-         /*   console.log(`Calculating: Price=${price}, Quantity=${quantity}`); // Debugging*/
+        var items = self.IsUpdated() ? self.SelectedOrder().Items() : self.NewOrder().Items();
+        var total = items.reduce(function (total, item) {
+            var price = parseFloat(item.Price()) || 0;
+            var quantity = parseInt(item.Quantity()) || 0;
             return total + (price * quantity);
         }, 0);
-       // console.log(`Total Amount: ${total.toFixed(2)}`); // Debugging
-        return total.toFixed(2); // Round to 2 decimal places
+        return total.toFixed(2);
     });
 
-    //Save Item
-    self.SaveOrder = function () {
-       // debugger
-        self.totalAmount();
-        ko.toJS(self.SelectedOrder().TotalAmount = self.totalAmount());
-        var order = ko.toJS(self.SelectedOrder)
-        if (order.OrderId === 0) {
-            order.OrderId = self.CurrentOrder().length + 1;
-            self.CurrentOrder.push(ko.toJS(self.SelectedOrder));
-        } else {
-            var index = self.CurrentOrder().findIndex(o => o.OrderId() === order.OrderId);
-            if (index !== -1) {
-                self.CurrentOrder()[index] = new OrderItemVM(order);
-                self.CurrentOrder.valueHasMutated();
-            }
-        }
-        $('#orderModal').modal('hide');
-        self.CloseModel();
-        self.AddItem();
-    };
+    // Initialize the form
+    self.resetForm();
 }
 
-var ajax =
-{
+var ajax = {
     get: function (url) {
         return $.ajax({
             method: "GET",
@@ -133,7 +132,7 @@ var ajax =
             },
             method: "POST",
             url: url,
-            data: (data)
+            data: data
         });
     },
     put: function (url, data) {
