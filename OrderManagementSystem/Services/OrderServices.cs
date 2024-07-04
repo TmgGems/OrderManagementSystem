@@ -147,7 +147,10 @@ namespace OrderManagementSystem.Services
             {
                 return false;
             }
+            //masterData.Date = model.Date.ToString()
             masterData.CustomerName = model.CustomerName;
+            masterData.Address = model.Address;
+            masterData.TotalAmount = model.TotalAmount;
             var masterAdd = _context.Orders.Update(masterData);
             await _context.SaveChangesAsync();
 
