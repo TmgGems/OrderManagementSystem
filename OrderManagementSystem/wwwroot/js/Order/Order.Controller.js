@@ -25,7 +25,7 @@ var OrderController = function () {
     self.getData();
 
     self.AddOrder = function () {
-        var orderData = ko.toJS(self.NewOrder);
+        var orderData = ko.toJS(self.IsUpdated() ? self.SelectedOrder : self.NewOrder);
         orderData.TotalAmount = self.totalAmount();
 
         switch (self.mode()) {
@@ -45,10 +45,16 @@ var OrderController = function () {
                 debugger;
                 ajax.put(baseUrl, JSON.stringify(orderData))
                     .done(function (result) {
-                        self.CurrentOrder.replace(self.SelectedOrder(), new OrderItemVM(result))
+                        var updatedOrder = new OrderItemVM(result);
+                        var index = self.CurrentOrder.indexOf(self.SelectedOrder());
+                        if (index >= 0) {
+                            self.CurrentOrder.splice(index, 1, updatedOrder);
+                        }
+                        self.resetForm();
+                        $('#orderModal').modal('hide');
                     })
                     .fail(function (err) {
-                        console.log(err);
+                        console.error("Error updating order:", err);
                     });
                 break;
 
@@ -71,6 +77,7 @@ var OrderController = function () {
         self.SelectedOrder(model);
         self.IsUpdated(true);
         self.mode(mode.update);
+        $('#orderModal').modal('show');
     }
 
     self.CloseModel = function () {
